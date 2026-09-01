@@ -3,9 +3,9 @@
   "version": "1.2.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3939",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3939",
     "lint": "eslint",
     "test:scraper": "node --env-file=.env scripts/test-scraper.js",
     "test:pillar": "node scripts/test-pillar.js"
