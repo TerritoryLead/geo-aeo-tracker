@@ -45,3 +45,8 @@ next-env.d.ts
 
 # project spec (not part of the app)
 guidelines.md
+
+# programmatic AEO run artifact (scripts/run-company.mjs)
+/public/aeo-inject.json
+# generated per-report AEO configs (run_aeo.py writes scripts/<slug>.json)
+scripts/*.json

@@ -128,7 +128,6 @@ const tabIcons: Record<TabKey, ReactNode> = {
 const STORAGE_KEY = "sovereign-aeo-tracker-v1";
 const WORKSPACES_KEY = "sovereign-workspaces";
 const ACTIVE_WS_KEY = "sovereign-active-workspace";
-const THEME_KEY = "sovereign-theme";
 
 function storageKeyForWorkspace(wsId: string) {
   return wsId === "default" ? STORAGE_KEY : `sovereign-aeo-tracker-${wsId}`;
@@ -263,47 +262,14 @@ export function SovereignDashboard({ demoMode = false }: { demoMode?: boolean } 
   const [state, setState] = useState<AppState>(demoMode ? DEMO_STATE : defaultState);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState(demoMode ? "Demo mode — read-only preview" : "");
-  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [activeWsId, setActiveWsId] = useState<string>("default");
   const [showWsPicker, setShowWsPicker] = useState(false);
   const [showScoreInfo, setShowScoreInfo] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  /** Apply theme class to <html> */
-  const applyTheme = useCallback((t: "light" | "dark" | "system") => {
-    const root = document.documentElement;
-    if (t === "dark") {
-      root.classList.add("dark");
-    } else if (t === "light") {
-      root.classList.remove("dark");
-    } else {
-      // system
-      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        root.classList.add("dark");
-      } else {
-        root.classList.remove("dark");
-      }
-    }
-  }, []);
-
-  function cycleTheme() {
-    const order: ("light" | "dark" | "system")[] = ["light", "dark", "system"];
-    const next = order[(order.indexOf(theme) + 1) % 3];
-    setTheme(next);
-    applyTheme(next);
-    if (!demoMode) localStorage.setItem(THEME_KEY, next);
-  }
-
   /** Load workspaces on mount */
   useEffect(() => {
-    // Theme
-    const savedTheme = localStorage.getItem(THEME_KEY) as "light" | "dark" | "system" | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      applyTheme(savedTheme);
-    }
-
     if (demoMode) return; // Skip workspace loading in demo mode
 
     // Workspaces
@@ -324,7 +290,7 @@ export function SovereignDashboard({ demoMode = false }: { demoMode?: boolean } 
       setWorkspaces([defaultWs]);
       setActiveWsId("default");
     }
-  }, [applyTheme]);
+  }, [demoMode]);
 
   /** Load app state for active workspace */
   useEffect(() => {
@@ -1364,8 +1330,6 @@ Now analyze all ${competitorList.length} competitors:`,
     );
   }
 
-  const themeIcon = theme === "dark" ? "🌙" : theme === "light" ? "☀️" : "💻";
-
   return (
     <div className="flex h-screen overflow-hidden text-th-text">
       {/* ── Mobile sidebar backdrop ── */}
@@ -1377,18 +1341,25 @@ Now analyze all ${competitorList.length} competitors:`,
       )}
       {/* ── Sidebar ──────────────────────────────────── */}
       <aside className={`fixed inset-y-0 left-0 z-50 flex w-[250px] shrink-0 flex-col border-r border-th-border bg-th-sidebar transition-transform duration-200 md:static md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        {/* Octo wordmark */}
+        <div className="flex items-center gap-2 border-b border-th-border px-4 pb-2 pt-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/octo-wordmark.png" alt="Octo360" className="h-5 w-auto" />
+          <span className="ml-auto text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--octo-orange)]">AEO</span>
+        </div>
+
         {/* Brand / Workspace switcher */}
         <div className="border-b border-th-border px-4 py-3">
           {demoMode ? (
             <div className="flex items-center gap-2 px-1 py-0.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-th-accent">
-                <span className="text-xs font-bold text-th-text-inverse">
-                  {(state.brand.brandName || "AE").slice(0, 2).toUpperCase()}
+                <span className="text-xs font-bold text-white">
+                  {(state.brand.brandName || "OA").slice(0, 2).toUpperCase()}
                 </span>
               </div>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-semibold text-th-text">
-                  {state.brand.brandName || "AEO Tracker"}
+                  {state.brand.brandName || "Octo AEO"}
                 </div>
                 <div className="text-xs text-th-text-muted">Demo workspace</div>
               </div>
@@ -1400,13 +1371,13 @@ Now analyze all ${competitorList.length} competitors:`,
             className="flex w-full items-center gap-2 rounded-lg px-1 py-0.5 text-left hover:bg-th-card-hover transition-colors"
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-th-accent">
-              <span className="text-xs font-bold text-th-text-inverse">
-                {(state.brand.brandName || "AE").slice(0, 2).toUpperCase()}
+              <span className="text-xs font-bold text-white">
+                {(state.brand.brandName || "OA").slice(0, 2).toUpperCase()}
               </span>
             </div>
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-semibold text-th-text">
-                {state.brand.brandName || "AEO Tracker"}
+                {state.brand.brandName || "Octo AEO"}
               </div>
               {state.brand.websites.length > 0 && (
                 <div className="truncate text-xs text-th-text-muted">{state.brand.websites[0].replace(/^https?:\/\//, "")}{state.brand.websites.length > 1 ? ` +${state.brand.websites.length - 1}` : ""}</div>
@@ -1600,15 +1571,6 @@ Now analyze all ${competitorList.length} competitors:`,
               {state.activeProviders.length === ALL_PROVIDERS.length ? "1" : "All"}
             </button>
           </div>
-
-          {/* Theme toggle */}
-          <button
-            onClick={cycleTheme}
-            className="rounded-md border border-th-border px-2 py-1 text-sm hover:bg-th-card-hover transition-colors"
-            title={`Theme: ${theme}`}
-          >
-            {themeIcon}
-          </button>
 
           <span className={`rounded-md px-2.5 py-1 text-xs ${busy ? "animate-pulse bg-th-accent-soft text-th-text-accent" : "bg-th-card-alt text-th-text-muted"}`}>
             {message || "Ready"}
