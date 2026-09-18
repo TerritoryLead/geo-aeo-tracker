@@ -55,6 +55,34 @@ cd /opt/geo-aeo-tracker && git pull && npm ci && npm run build
 sudo systemctl restart geo-aeo-tracker
 ```
 
+## Weekly client tracking (Phase 2)
+
+Runs `py/weekly_run.py` on a timer: reads active+due rows from `aeo.client`,
+scrapes each via `run-company.mjs`, analyses, and writes `aeo.coverage`
+(`subject_type='client'`), stamping `last_run_at`.
+
+### Prereqs on the box
+- **Warehouse reachable.** The warehouse is GCP Cloud SQL (`app_prod`) and the
+  box isn't on GCP, so run `cloud_sql_proxy` as its own service (with a GCP
+  service-account key). `AEO_WAREHOUSE_DSN` should include a **host**; if it
+  doesn't (e.g. the admin URL), set `PGHOST=127.0.0.1`/`PGPORT=5432` in the unit.
+- **Schema exists.** Backend migration applied:
+  `combined/database/postgres/migrations/002_aeo_schema.sql`.
+- **Python deps:** `pip install -r py/requirements.txt`.
+- **Tracker service up** (the weekly runner scrapes against `:3939`).
+
+### Install the timer
+```bash
+sudo cp deploy/geo-aeo-tracker-weekly.service deploy/geo-aeo-tracker-weekly.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now geo-aeo-tracker-weekly.timer
+systemctl list-timers geo-aeo-tracker-weekly.timer      # confirm next run (Sun 04:00)
+# manual test of ONE client (metered — costs Brightdata):
+sudo -u octo python3 py/weekly_run.py --client dibara_masonry
+```
+
+Onboard more clients with the `aeo-client-registry` skill.
+
 ## Upgrading from upstream later
 
 `upstream` = danishashko/sovereign-aeo-tracker. `git fetch upstream && git merge

@@ -52,3 +52,6 @@ HANDOFF.md
 
 # generated per-report AEO configs (run_aeo.py writes scripts/<slug>.json)
 scripts/*.json
+
+# programmatic AEO run artifact
+/public/aeo-inject.json

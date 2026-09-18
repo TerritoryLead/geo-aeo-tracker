@@ -1,0 +1,30 @@
+[Unit]
+Description=Octo AEO weekly tracking run (all due clients -> aeo.coverage)
+After=network-online.target geo-aeo-tracker.service
+Wants=network-online.target
+# Needs the tracker service up to scrape; needs the warehouse reachable
+# (cloud_sql_proxy on the box) — start that too.
+Requires=geo-aeo-tracker.service
+
+[Service]
+Type=oneshot
+
+# --- adjust to the box ---
+User=octo
+Group=octo
+WorkingDirectory=/opt/geo-aeo-tracker
+
+# Holds AEO_WAREHOUSE_DSN (and AEO_BASE_URL if the tracker isn't on :3939).
+EnvironmentFile=-/opt/geo-aeo-tracker/.env
+
+# AEO_WAREHOUSE_DSN should include a host. If it doesn't (e.g. the admin URL) and
+# you reach the warehouse via cloud_sql_proxy TCP, set these instead:
+# Environment=PGHOST=127.0.0.1
+# Environment=PGPORT=5432
+
+# python3 + py/requirements.txt installed (pip install -r py/requirements.txt).
+ExecStart=/usr/bin/python3 py/weekly_run.py
+TimeoutStartSec=3600
+
+[Install]
+WantedBy=multi-user.target
