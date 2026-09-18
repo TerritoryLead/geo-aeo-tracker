@@ -1,0 +1,42 @@
+[Unit]
+Description=Octo AEO tracker (geo-aeo-tracker, Next.js) — answer-engine visibility service
+Documentation=https://github.com/TerritoryLead/geo-aeo-tracker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+# --- adjust these three to the box ---
+User=octo
+Group=octo
+WorkingDirectory=/opt/geo-aeo-tracker
+
+# Next.js auto-loads .env from WorkingDirectory; this is belt-and-braces and lets
+# systemd fail-soft if it is missing (leading '-'). Holds BRIGHT_DATA_KEY, the
+# BRIGHT_DATA_DATASET_* ids, SUPABASE_* , GEMINI_API_KEY, OPENROUTER_KEY, and
+# (for the cloud KV proxy) STATE_SYNC_SECRET.
+EnvironmentFile=-/opt/geo-aeo-tracker/.env
+Environment=NODE_ENV=production
+# Pinned port: run_aeo.py's AEO_BASE default and the package.json start script.
+Environment=PORT=3939
+
+# Primary: system Node (install once via NodeSource; simplest on a server).
+# Build happens at DEPLOY time (see deploy/README.md), not on every start.
+ExecStart=/usr/bin/npm run start
+
+# Alternative if you use nvm instead of a system Node (honors .nvmrc):
+#   Environment=NVM_DIR=/home/octo/.nvm
+#   ExecStart=/bin/bash -lc 'source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && exec npm run start'
+
+Restart=always
+RestartSec=5
+TimeoutStartSec=60
+
+# Basic hardening (safe for a Next.js server that only needs its own dir + network)
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
