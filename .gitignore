@@ -49,3 +49,6 @@ guidelines.md
 
 # session handoff notes (auto-generated, not part of the app)
 HANDOFF.md
+
+# generated per-report AEO configs (run_aeo.py writes scripts/<slug>.json)
+scripts/*.json
